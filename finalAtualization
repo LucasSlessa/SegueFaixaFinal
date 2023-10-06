@@ -1,0 +1,157 @@
+#include <Arduino.h>
+
+const int sensorEsquerdoPin = 17;   // Pino do sensor esquerdo
+const int sensorDireitoPin = 16;    // Pino do sensor direito
+const int sensorMeio = 2;   // Pino do sensor esquerdo
+const int sensorDireitoPin1 = 15;
+const int sensorEsquerdoPin1 = 4;     // Pino do sensor direito
+const int motorEsquerdoPino1 = 22;  // Pino IN1 do motor esquerdo
+const int motorEsquerdoPino2 = 21;  // Pino IN2 do motor esquerdo
+const int motorDireitoPino1 = 18;   // Pino IN3 do motor direito
+const int motorDireitoPino2 = 19;   // Pino IN4 do motor direito
+int deadlinedireita = 0; // Logica para ignorar deadlines
+int deadlineesquerda = 0; // Logica para ignorar deadlines
+int Triangulo = 0; //logica para ajustar o trangulo
+int vd = 10;
+
+
+void avancar() {
+    digitalWrite(motorEsquerdoPino1, LOW);  // Inverter HIGH e LOW para inverter a direção
+    digitalWrite(motorEsquerdoPino2, HIGH);
+    digitalWrite(motorDireitoPino1, HIGH);   // Inverter HIGH e LOW para inverter a direção
+    digitalWrite(motorDireitoPino2, LOW);
+}
+void voltar() {
+    digitalWrite(motorEsquerdoPino1, HIGH);  // Inverter HIGH e LOW para inverter a direção
+    digitalWrite(motorEsquerdoPino2, LOW);
+    digitalWrite(motorDireitoPino1, LOW);   // Inverter HIGH e LOW para inverter a direção
+    digitalWrite(motorDireitoPino2, HIGH);
+}
+
+void girarEsquerda() {
+    digitalWrite(motorEsquerdoPino1, LOW);
+    digitalWrite(motorEsquerdoPino2, LOW);  // Inverter HIGH e LOW para inverter a direção
+    digitalWrite(motorDireitoPino1, HIGH);   // Inverter HIGH e LOW para inverter a direção
+    digitalWrite(motorDireitoPino2, LOW);
+}
+
+void girarDireita() {
+    digitalWrite(motorEsquerdoPino1, LOW);  // Inverter HIGH e LOW para inverter a direção
+    digitalWrite(motorEsquerdoPino2, HIGH);
+    digitalWrite(motorDireitoPino1, LOW);
+    digitalWrite(motorDireitoPino2, LOW);  // Inverter HIGH e LOW para inverter a direção
+}
+
+void parar() {
+    digitalWrite(motorEsquerdoPino1, LOW);
+    digitalWrite(motorEsquerdoPino2, LOW);
+    digitalWrite(motorDireitoPino1, LOW);
+    digitalWrite(motorDireitoPino2, LOW);
+}
+
+void setup() {
+    pinMode(sensorEsquerdoPin, INPUT);
+    pinMode(sensorDireitoPin, INPUT);
+    pinMode(motorEsquerdoPino1, OUTPUT);
+    pinMode(motorEsquerdoPino2, OUTPUT);
+    pinMode(motorDireitoPino1, OUTPUT);
+    pinMode(motorDireitoPino2, OUTPUT);
+}
+
+void loop() {
+    int leituraSensorEsquerdo = digitalRead(sensorEsquerdoPin);
+    int leituraSensorDireito = digitalRead(sensorDireitoPin);
+    int leiturasensorMeio = digitalRead(sensorMeio);
+    int leituraSensorDireito1 = digitalRead(sensorDireitoPin1);
+    int leituraSensorEsquerdo1 = digitalRead(sensorEsquerdoPin1);
+
+
+    if (leiturasensorMeio == HIGH ) {
+
+        girarDireita();
+        delay(10);
+
+        if(sensorDireitoPin1 == HIGH && sensorEsquerdoPin1 == LOW){
+
+            girarDireita();
+            delay(vd);
+            deadlinedireita++;
+
+
+        }else if(sensorEsquerdoPin1 == HIGH && sensorDireitoPin1 == LOW){
+            girarEsquerda();
+            delay(vd);
+            deadlinedireita++;
+
+        }
+          
+        // Ambos os sensores estão na linha preta, siga em frente.
+    } else if (leituraSensorDireito1 == HIGH && leituraSensorEsquerdo1 == HIGH ) {
+          
+            girarDireita();
+            delay(vd);
+            // Desvio para a esquerda (sobre o piso branco).
+
+    }else if (leituraSensorEsquerdo == LOW && leituraSensorDireito == LOW && leiturasensorMeio == LOW && leituraSensorDireito1 == LOW && leituraSensorEsquerdo1 == LOW ) {
+        
+        if (deadlinedireita == 1) {
+            girarEsquerda();
+            delay(vd);
+            girarDireita();
+            deadlinedireita = 0;
+        } else if (deadlineesquerda == 1) {
+            girarDireita();
+            delay(vd);
+            girarEsquerda();
+            deadlineesquerda = 0;
+        }
+
+        // Desvio para a esquerda (sobre o piso branco).
+    } else if (leituraSensorEsquerdo == HIGH && leituraSensorDireito == LOW && leiturasensorMeio == LOW && leituraSensorDireito1 == LOW && leituraSensorEsquerdo1 == LOW) {
+        
+        // Desvio para a esquerda (sobre o piso branco).
+        girarEsquerda();
+        delay(vd);
+        deadlineesquerda++;
+
+    } else if (leituraSensorEsquerdo == LOW && leituraSensorDireito == HIGH && leiturasensorMeio == LOW) {
+        
+        // Desvio para a esquerda (sobre o piso branco).
+        girarDireita();
+        delay(vd);
+        deadlinedireita++;
+
+    } else if (leituraSensorEsquerdo == LOW && leituraSensorDireito == HIGH) {
+        
+        // Desvio para a esquerda (sobre o piso branco).
+        girarDireita();
+
+    } else if (leituraSensorEsquerdo == HIGH && leituraSensorDireito == LOW) {
+        
+        // Desvio para a direita (sobre o piso branco).
+        girarEsquerda();
+
+    } else if (leituraSensorEsquerdo1 == LOW && leituraSensorEsquerdo == HIGH) {
+        
+        // Sensor esquerdo1 detectou a linha preta, vire à direita.
+        girarDireita();
+        delay(vd);  // Ajuste o tempo para a rotação de 90 graus
+        // Ajuste o tempo para avançar após a rotação
+
+    } else if (leituraSensorDireito1 == HIGH && leituraSensorDireito == LOW) {
+        
+        // Sensor direito1 detectou a linha preta, vire à esquerda.
+        girarEsquerda();
+        delay(vd);  // Ajuste o tempo para a rotação de 90 graus
+        // Ajuste o tempo para avançar após a rotação
+
+    } else  {
+        // Nenhum dos sensores está na linha preta, pare o robô.
+         // Nenhum dos sensores está na linha preta, pare o robô.
+        voltar();
+        delay(40);
+        girarDireita();
+        delay(100);
+       
+    } 
+}
